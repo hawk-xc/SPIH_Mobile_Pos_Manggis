@@ -1,9 +1,10 @@
 import pool from "../config/dbConfig.js";
+import formattedDate from '../config/timezoneConfig.js';
 import { nanoid } from "nanoid";
 
 const showAllPatientHandler = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM tb_patient");
+    const [rows] = await pool.query("SELECT id, unique_id, wife_nik, wife_name, created_at FROM tb_patients");
     res.status(200).json({
       status: "success",
       message: "success show all patient",
@@ -18,24 +19,28 @@ const showAllPatientHandler = async (req, res) => {
 };
 
 const showPatientHandler = async (req, res) => {
+  const user = req.user;
+  const id = req.params.id;
   try {
-    const query = `
-        SELECT tb_patient.unique_id, tb_patient.payment, tb_patient.created_at, 
-        tb_examination.body_weight, tb_examination.gestational_age, tb_examination.fundal_height, 
-        tb_examination.leg_swealing, tb_examination.checkup_date, tb_examination.checkupback_date,
-        tb_give_birth.birth_date, tb_give_birth.gestational_age, tb_give_birth.gender, tb_give_birth.height, tb_give_birth.weight
-        FROM tb_patient
-        LEFT JOIN tb_examination ON tb_patient.unique_id = tb_examination.patient_id
-        LEFT JOIN tb_give_birth ON tb_patient.unique_id = tb_give_birth.patient_id
-        WHERE tb_patient.unique_id = ?`;
+    const patient_query = "SELECT * FROM tb_patients WHERE unique_id = ?";
+    const examination_query = "SELECT * FROM tb_examinations WHERE patient_id = ?";
+    const givebirth_query = "SELECT * FROM tb_givebirth WHERE patient_id = ?";
+    const [patient_rows] = await pool.query(patient_query, [id]);
+    const [examination_rows] = await pool.query(examination_query, [patient_rows.id]);
+    const [givebirth_rows] = await pool.query(givebirth_query, [patient_rows.id]);
 
-    const [rows] = await pool.query(query, [req.params.unique_id]);
+    const data_body = {
+      patient: patient_rows,
+      examination: examination_rows || null,
+      givebirth: givebirth_rows || null
+    }
 
-    if (rows.length > 0) {
+    if (patient_rows.length > 0) {
       res.status(200).json({
         status: "success",
-        message: `success show patient ${req.params.unique_id}`,
-        data: rows,
+        id: patient_rows[0].unique_id,
+        message: `success show patient ${patient_rows[0].wife_name}`,
+        data: data_body
       });
     } else {
       res.status(404).json({
@@ -53,12 +58,13 @@ const showPatientHandler = async (req, res) => {
 
 const createPatientHandler = async (req, res) => {
   const data = req.body;
-  const uniqueId = nanoid(16);
-  const formattedDate = date.toISOString().slice(0, 19).replace("T", " ");
+  const user = req.user;
+  const uniqueId = 'patient.' + nanoid(16);
 
   try {
-    const query = `INSERT INTO tb_patient (
+    const query = `INSERT INTO tb_patients (
     unique_id, 
+    user_id,
     payment, 
     wife_nik, 
     wife_name, 
@@ -66,15 +72,16 @@ const createPatientHandler = async (req, res) => {
     wife_placedob, 
     wife_education, 
     husband_nik, 
-    hustand_name,
+    husband_name,
     husband_blood, 
-    husbang_placedob, 
+    husband_placedob, 
     husband_education, 
     religion, 
     created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const [rows] = await pool.query(query, [
       uniqueId,
+      user.id,
       data.payment,
       data.wife_nik,
       data.wife_name,
@@ -87,13 +94,15 @@ const createPatientHandler = async (req, res) => {
       data.husbang_placedob,
       data.husband_education,
       data.religion,
-      formattedDate,
+      formattedDate(),
     ]);
 
     if (rows.affectedRows > 0) {
       res.status(200).json({
         status: "success",
+        patient_id: uniqueId,
         message: `success add patient ${data.wife_name}`,
+        created_at: formattedDate(),
       });
     } else {
       res.status(404).json({
@@ -154,47 +163,11 @@ const createGiveBirthHandler = async (req, res) => {
   }
 };
 
-const createExaminationHandler = async (req, res) => {
-  const data = req.body;
-  const formattedDate = date.toISOString().slice(0, 19).replace("T", " ");
-
-  try {
-    const query = `INSERT INTO tb_examination (
-    patient_id,
-    body_weight,
-    gestational_age,
-    fundal_height,
-    leg_swealing,
-    action_description,
-    checkup_date,
-    checkupback_date,
-    created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-    const [rows] = await pool.query(query, [
-      data.patient_id,
-      data.body_weight,
-      data.gestational_age,
-      data.fundal_height,
-      data.leg_swealing,
-      data.action_description,
-      data.checkup_date,
-      data.checkupback_date,
-      formattedDate,
-    ]);
-  } catch (error) {
-    res.status(404).json({
-      status: "fail",
-      message: `error: ${error}`,
-    });
-  }
-};
-
 const patientHandler = {
   showAllPatientHandler,
   showPatientHandler,
   createGiveBirthHandler,
   createPatientHandler,
-  createExaminationHandler,
 };
 
 export default patientHandler;

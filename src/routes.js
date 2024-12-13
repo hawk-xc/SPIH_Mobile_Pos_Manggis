@@ -4,6 +4,7 @@ import userHandler from "../handler/userHandler.js";
 import jwtAuthToken from "../middleware/jwtAuthToken.js";
 import validation from "../middleware/validation.js";
 import patientHandler from "../handler/patientHandler.js";
+import examinationHandler from "../handler/examinationHandler.js";
 
 route.get("/", userHandler.baseUrlHandler);
 
@@ -34,9 +35,10 @@ route.get("/patient/:id", jwtAuthToken, patientHandler.showPatientHandler);
 route.post(
   "/patient",
   jwtAuthToken,
-  validation.registerInputValidation,
   patientHandler.createPatientHandler
 );
+
+route.post('/examination', jwtAuthToken, examinationHandler.createExaminationHandler);
 // route.put(
 //   "/patient/:id",
 //   jwtAuthToken,
