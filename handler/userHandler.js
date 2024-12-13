@@ -2,8 +2,10 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import pool from '../config/dbConfig.js';
+import formattedDate from '../config/timezoneConfig.js';
+import dotenv from 'dotenv';
+dotenv.config();
 import { nanoid } from 'nanoid';
-const date = new Date();
 
 /**
  * Base URL handler
@@ -16,8 +18,7 @@ const baseUrlHandler = (req, res) => {
   res.status(200).json({
     status: 'success',
     message:
-      'Sentivue backend APIs endpoint, please /login or /register first to use the APIs',
-    version: 'tags/v1.0.0',
+      'SPIH POS MANGGIS APIs SERVICE',
   });
 };
 
@@ -48,7 +49,7 @@ const loginHandler = async (req, res) => {
 
   try {
     const query =
-      'SELECT id, email, unique_id, username, name, role_id, address, created_at, password, google_id FROM tb_users WHERE email = ?';
+      'SELECT id, unique_id, email, username, password, created_at FROM tb_users WHERE email = ?';
     const [rows] = await pool.query(query, [email]);
 
     const user = rows[0];
@@ -57,7 +58,6 @@ const loginHandler = async (req, res) => {
       return res.status(404).json({
         status: 'fail',
         message: 'user not found!',
-        version: 'tags/v1.0.0',
       });
     }
 
@@ -67,31 +67,27 @@ const loginHandler = async (req, res) => {
       return res.status(401).json({
         status: 'error',
         message: 'Invalid password',
-        version: 'tags/v1.0.0',
       });
     }
 
     const token = jwt.sign(
       {
         id: user.id,
-        name: user.name,
         username: user.username,
         uniqueId: user.unique_id,
         email: user.email,
-        role: user.role_id,
-        address: user.address,
-        googleId: user.google_id,
         createdAt: user.created_at,
       },
-      'S3N71VU3001',
-      { expiresIn: '1d' }
+      process.env.JWT_TOKEN || 'AB5TRACT',
+      { expiresIn: process.env.JWT_TOKEN_EXPIRATION || '1d' }
     );
+
+    console.log(token);
 
     res.json({
       status: 'success',
       message: 'User logged in successfully',
       token: token,
-      version: 'tags/v1.0.0',
     });
     // eslint-disable-next-line no-unused-vars
   } catch (error) {
@@ -109,35 +105,29 @@ const loginHandler = async (req, res) => {
  * @returns {Promise<void>}
  */
 const registerHandler = async (req, res) => {
-  const { email, password, username, fullname, address } = req.body;
+  const { email, username, password } = req.body;
   const uniqueId = nanoid(16);
 
   try {
     const hashedPassword = await bcrypt.hashSync(password, 10);
-    const formattedDate = date.toISOString().slice(0, 19).replace('T', ' ');
-
     const query =
-      'INSERT INTO tb_users (unique_id, name, username, email, password, address, created_at) value (?, ?, ?, ?, ?, ?, ?)';
+      'INSERT INTO tb_users (unique_id, username, email, password, created_at) value (?, ?, ?, ?, ?)';
     await pool.query(query, [
       uniqueId,
-      fullname,
       username,
       email,
       hashedPassword,
-      address,
-      formattedDate,
+      formattedDate(),
     ]);
 
     res.status(200).json({
       status: 'success',
       message: 'User registered successfully, you can login using /login',
-      version: 'tags/v1.0.0',
     });
   } catch (error) {
     res.status(404).json({
       status: 'fail',
       message: `error: ${error}`,
-      version: 'tags/v1.0.0',
     });
   }
 };
@@ -152,27 +142,24 @@ const profileHandler = async (req, res) => {
   const user = req.user;
 
   try {
-    const query = 'SELECT unique_id, role_id, email, username, name, google_id, address, created_at FROM tb_users WHERE unique_id = ?';
+    const query = 'SELECT unique_id, email, username, created_at FROM tb_users WHERE unique_id = ?';
     const [rows] = await pool.query(query, [user.uniqueId]);
 
     if (rows.length === 0) {
       return res.status(404).json({
         status: 'fail',
         message: 'user not found!',
-        version: 'tags/v1.0.0',
       });
     }
 
     res.status(200).json({
       status: 'success',
       data: rows,
-      version: 'tags/v1.0.0',
     });
   } catch (error) {
     res.status(404).json({
       status: 'fail',
       message: `error: ${error}`,
-      version: 'tags/v1.0.0',
     });
   }
 };
