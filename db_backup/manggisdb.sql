@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.40, for Linux (x86_64)
 --
--- Host: 127.0.0.1    Database: manggisdb
+-- Host: 127.0.0.1    Database: sql12751929
 -- ------------------------------------------------------
 -- Server version	9.1.0
 
@@ -19,6 +19,8 @@
 -- Table structure for table `tb_examinations`
 --
 
+USE `sql12751929`;
+
 DROP TABLE IF EXISTS `tb_examinations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -30,14 +32,15 @@ CREATE TABLE `tb_examinations` (
   `fundal_height` int DEFAULT NULL,
   `leg_swelling` int DEFAULT NULL,
   `action_desc` text,
-  `checkup_date` datetime DEFAULT CURRENT_TIMESTAMP,
-  `checkup_back_date` datetime DEFAULT CURRENT_TIMESTAMP,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `checkup_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `checkup_back_date` TIMESTAMP DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_patient_examinations` (`patient_id`),
   CONSTRAINT `fk_patient_examinations` FOREIGN KEY (`patient_id`) REFERENCES `tb_patients` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 
 --
 -- Table structure for table `tb_givebirth`
@@ -49,17 +52,17 @@ DROP TABLE IF EXISTS `tb_givebirth`;
 CREATE TABLE `tb_givebirth` (
   `id` int NOT NULL AUTO_INCREMENT,
   `patient_id` int NOT NULL,
-  `birth_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `birth_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `gestational_age` int DEFAULT '9',
   `gestational_place` varchar(254) DEFAULT NULL,
   `gender` varchar(254) DEFAULT NULL,
   `height` int DEFAULT NULL,
   `weight` int DEFAULT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_patient_givebirth` (`patient_id`),
   CONSTRAINT `fk_patient_givebirth` FOREIGN KEY (`patient_id`) REFERENCES `tb_patients` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -85,12 +88,12 @@ CREATE TABLE `tb_patients` (
   `husband_placedob` varchar(254) DEFAULT NULL,
   `husband_education` varchar(254) DEFAULT NULL,
   `religion` varchar(254) DEFAULT 'islam',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_id` (`unique_id`),
   KEY `FK_PATIENT_ADDED_BY_USER` (`user_id`),
   CONSTRAINT `FK_PATIENT_ADDED_BY_USER` FOREIGN KEY (`user_id`) REFERENCES `tb_users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -106,10 +109,10 @@ CREATE TABLE `tb_users` (
   `email` varchar(254) NOT NULL,
   `username` varchar(255) NOT NULL,
   `password` varchar(254) NOT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_id` (`unique_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
